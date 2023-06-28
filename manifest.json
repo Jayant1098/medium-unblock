@@ -1,0 +1,13 @@
+{
+  "name": "Medium Unblocker",
+  "version": "0.1",
+  "manifest_version": 3,
+  "action": {
+    "default_title": "Click to unblock"
+  },
+  "permissions": ["tabs", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
