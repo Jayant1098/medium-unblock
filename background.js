@@ -3,22 +3,39 @@ function getSiteName() {
   return siteName ? siteName.getAttribute('content') : '';
 }
 
+const checkIsMediumSite = (siteName) => siteName === 'Medium';
+
+const use12FtService = (url) =>
+  `https://12ft.io/proxy?q=${encodeURIComponent(url)}`;
+
+chrome.tabs.onActivated.addListener(checkSiteAndEnableExtension);
+
+async function checkSiteAndEnableExtension({ tabId }) {
+  if (tabId) {
+    try {
+      const [res] = await chrome.scripting.executeScript({
+        target: { tabId },
+        func: getSiteName,
+      });
+
+      if (checkIsMediumSite(res.result)) {
+        chrome.action.enable();
+        chrome.action.setIcon({ path: 'images/enabled_icon.png' });
+      } else {
+        chrome.action.setIcon({ path: 'images/disabled_icon.png' });
+        chrome.action.disable();
+      }
+    } catch (e) {
+      chrome.action.disable();
+      console.log('Captured Error', e);
+      chrome.action.setIcon({ path: 'images/disabled_icon.png' });
+    }
+  }
+}
+
 chrome.action.onClicked.addListener(async (tab) => {
   try {
-    // Get site name.
-    const [res] = await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      func: getSiteName,
-    });
-
-    const { result: siteName } = res;
-
-    const use12FtService = (url) =>
-      `https://12ft.io/proxy?q=${encodeURIComponent(url)}`;
-
-    const checkIsMediumSite = (siteName) => siteName === 'Medium';
-
-    if (checkIsMediumSite(siteName)) {
+    if (chrome.action.isEnabled()) {
       console.log('Medium site detected. Removing Paywall.');
       chrome.tabs.update(tab.id, { url: use12FtService(tab.url) });
       return;
@@ -28,3 +45,10 @@ chrome.action.onClicked.addListener(async (tab) => {
     console.log('Captured Error', e);
   }
 });
+
+// TODO: To be implemented later on in case the existing updated url is not detected.
+// chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
+//   if (tab.active && changeInfo.status === 'complete') {
+//     console.log('tabId', tabId);
+//   }
+// });
