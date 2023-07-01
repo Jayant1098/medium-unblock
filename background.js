@@ -19,6 +19,7 @@ async function checkSiteAndEnableExtension({ tabId }) {
       });
 
       if (checkIsMediumSite(res.result)) {
+        console.log('Medium site detected. Enabling extension.');
         chrome.action.enable();
         chrome.action.setIcon({ path: 'images/enabled_icon.png' });
       } else {
@@ -36,7 +37,6 @@ async function checkSiteAndEnableExtension({ tabId }) {
 chrome.action.onClicked.addListener(async (tab) => {
   try {
     if (chrome.action.isEnabled()) {
-      console.log('Medium site detected. Removing Paywall.');
       chrome.tabs.update(tab.id, { url: use12FtService(tab.url) });
       return;
     }
@@ -46,9 +46,7 @@ chrome.action.onClicked.addListener(async (tab) => {
   }
 });
 
-// TODO: To be implemented later on in case the existing updated url is not detected.
-// chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
-//   if (tab.active && changeInfo.status === 'complete') {
-//     console.log('tabId', tabId);
-//   }
-// });
+chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
+  if (tab.active && changeInfo.status === 'complete' && tab.url)
+    checkSiteAndEnableExtension({ tabId });
+});
